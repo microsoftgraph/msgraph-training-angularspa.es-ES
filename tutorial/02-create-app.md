@@ -1,6 +1,6 @@
 <!-- markdownlint-disable MD002 MD041 -->
 
-Abra la interfaz de línea de comandos (CLI), vaya a un directorio donde tenga derechos para crear archivos y ejecute los siguientes comandos para instalar la herramienta angular de la [CLI](https://www.npmjs.com/package/@angular/cli) y crear una nueva aplicación de angular.
+Abra la interfaz de línea de comandos (CLI), vaya a un directorio donde tenga derechos para crear archivos y ejecute los siguientes comandos para instalar la herramienta [angular](https://www.npmjs.com/package/@angular/cli) de la CLI y crear una nueva aplicación de angular.
 
 ```Shell
 npm install -g @angular/cli
@@ -36,10 +36,10 @@ Antes de continuar, instale algunos paquetes adicionales que usará más adelant
 Ejecute el siguiente comando en su CLI.
 
 ```Shell
-npm install bootstrap@4.3.1 @fortawesome/angular-fontawesome@0.3.0 @fortawesome/fontawesome-svg-core@1.2.17
-npm install @fortawesome/free-regular-svg-icons@5.8.1 @fortawesome/free-solid-svg-icons@5.8.1
-npm install moment@2.24.0 moment-timezone@0.5.25 @ng-bootstrap/ng-bootstrap@4.1.2
-npm install @azure/msal-angular@0.1.2 rxjs-compat@6.5.1 @microsoft/microsoft-graph-client@1.6.0
+npm install bootstrap@4.3.1 @fortawesome/angular-fontawesome@0.5.0 @fortawesome/fontawesome-svg-core@1.2.22
+npm install @fortawesome/free-regular-svg-icons@5.10.2 @fortawesome/free-solid-svg-icons@5.10.2
+npm install moment@2.24.0 moment-timezone@0.5.26 @ng-bootstrap/ng-bootstrap@5.1.1
+npm install @azure/msal-angular@0.1.2 rxjs-compat@6.5.3 @microsoft/microsoft-graph-client@1.7.0
 ```
 
 ## <a name="design-the-app"></a>Diseñar la aplicación
