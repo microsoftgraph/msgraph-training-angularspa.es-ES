@@ -1,6 +1,6 @@
 # <a name="graphtutorial"></a>GraphTutorial
 
-Este proyecto se generó con la versión 7.1.1 de la [CLI](https://github.com/angular/angular-cli) de angular.
+Este proyecto se generó con [angular CLI](https://github.com/angular/angular-cli) versión 8.3.20.
 
 ## <a name="development-server"></a>Servidor de desarrollo
 
@@ -20,8 +20,8 @@ Ejecutar `ng test` para ejecutar las pruebas unitarias mediante [Karma](https://
 
 ## <a name="running-end-to-end-tests"></a>Ejecutar pruebas de un extremo a otro
 
-Ejecutar `ng e2e` para ejecutar las pruebas de un extremo a otro a [](http://www.protractortest.org/)través del autotractor.
+Ejecutar `ng e2e` para ejecutar las pruebas de un extremo a otro a través del [autotractor](http://www.protractortest.org/).
 
 ## <a name="further-help"></a>Ayuda adicional
 
-Para obtener más ayuda sobre la CLI de angular, use `ng help` o vaya consulte el [archivo Léame](https://github.com/angular/angular-cli/blob/master/README.md)de la CLI de angular.
+Para obtener más ayuda sobre la CLI de angular, use `ng help` o vaya consulte el archivo Léame de la CLI de [angular](https://github.com/angular/angular-cli/blob/master/README.md).

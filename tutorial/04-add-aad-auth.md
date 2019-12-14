@@ -126,7 +126,7 @@ Ahora que tiene el servicio de autenticación, se puede inyectar en los componen
 - Agregar `import { AuthService } from '../auth.service';` a la parte superior del archivo.
 - Quite las `authenticated` propiedades `user` y de la clase y quite el código que las establece en `ngOnInit`.
 - Inserte el `AuthService` mediante la adición del siguiente parámetro a `constructor`: `private authService: AuthService`.
-- Reemplace el método `signIn` existente por lo siguiente:
+- Reemplace el método `signIn` existente con el siguiente:
 
     ```TypeScript
     async signIn(): Promise<void> {
@@ -134,7 +134,7 @@ Ahora que tiene el servicio de autenticación, se puede inyectar en los componen
     }
     ```
 
-- Reemplace el método `signOut` existente por lo siguiente:
+- Reemplace el método `signOut` existente con el siguiente:
 
     ```TypeScript
     signOut(): void {
@@ -278,6 +278,13 @@ private async getUser(): Promise<User> {
 
   return user;
 }
+```
+
+Busque y quite el código siguiente en el `getAccessToken` método que agrega una alerta para mostrar el token de acceso.
+
+```TypeScript
+// Temporary to display token in an error box
+if (result) this.alertsService.add('Token acquired', result);
 ```
 
 Busque y quite el código siguiente del `signIn` método.
