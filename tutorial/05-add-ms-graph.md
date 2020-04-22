@@ -4,205 +4,98 @@ En este ejercicio, incorporará Microsoft Graph a la aplicación. Para esta apli
 
 ## <a name="get-calendar-events-from-outlook"></a>Obtener eventos de calendario de Outlook
 
-Empiece por crear una `Event` clase que defina los campos que mostrará la aplicación. Cree un nuevo archivo en el `./src/app` directorio denominado `event.ts` y agregue el siguiente código.
+1. Cree un nuevo archivo en el `./src/app` directorio denominado `event.ts` y agregue el siguiente código.
 
-```TypeScript
-// For a full list of fields, see
-// https://docs.microsoft.com/graph/api/resources/event?view=graph-rest-1.0
-export class Event {
-  subject: string;
-  organizer: Recipient;
-  start: DateTimeTimeZone;
-  end: DateTimeTimeZone;
-}
+    :::code language="typescript" source="../demo/graph-tutorial/src/app/event.ts" id="eventClasses":::
 
-// https://docs.microsoft.com/graph/api/resources/recipient?view=graph-rest-1.0
-export class Recipient {
-  emailAddress: EmailAddress;
-}
+1. Agregue un nuevo servicio para que contenga todas las llamadas de gráfico. Ejecute el siguiente comando en su CLI.
 
-// https://docs.microsoft.com/graph/api/resources/emailaddress?view=graph-rest-1.0
-export class EmailAddress {
-  name: string;
-  address: string;
-}
+    ```Shell
+    ng generate service graph
+    ```
 
-// https://docs.microsoft.com/graph/api/resources/datetimetimezone?view=graph-rest-1.0
-export class DateTimeTimeZone {
-  dateTime: string;
-  timeZone: string;
-}
-```
+    Al igual que con el servicio de autenticación que creó anteriormente, la creación de un servicio le permite inyectarlo en cualquier componente que necesite acceso a Microsoft Graph.
 
-A continuación, agregue un nuevo servicio que contenga todas las llamadas de gráfico. Al igual que con el servicio de autenticación que creó anteriormente, la creación de un servicio le permite inyectarlo en cualquier componente que necesite acceso a Microsoft Graph. Ejecute el siguiente comando en su CLI.
+1. Una vez que haya finalizado el comando `./src/app/graph.service.ts` , abra el archivo y reemplace el contenido por lo siguiente.
 
-```Shell
-ng generate service graph
-```
+    :::code language="typescript" source="../demo/graph-tutorial/src/app/graph.service.ts" id="graphServiceSnippet":::
 
-Una vez que haya finalizado el comando `./src/app/graph.service.ts` , abra el archivo y reemplace el contenido por lo siguiente.
+    Tenga en cuenta lo que está haciendo este código.
 
-```TypeScript
-import { Injectable } from '@angular/core';
-import { Client } from '@microsoft/microsoft-graph-client';
+    - Inicializa un cliente de Graph en el constructor del servicio.
+    - Implementa una `getEvents` función que usa el cliente de Graph de la siguiente manera:
+      - La dirección URL a la que se `/me/events`llamará es.
+      - El `select` método limita los campos devueltos para cada evento a solo aquellos que la vista usará realmente.
+      - El `orderby` método ordena los resultados por la fecha y hora en que se crearon, con el elemento más reciente en primer lugar.
 
-import { AuthService } from './auth.service';
-import { Event } from './event';
-import { AlertsService } from './alerts.service';
+1. Cree un componente angular para llamar a este nuevo método y mostrar los resultados de la llamada. Ejecute el siguiente comando en su CLI.
 
-@Injectable({
-  providedIn: 'root'
-})
-export class GraphService {
+    ```Shell
+    ng generate component calendar
+    ```
 
-  private graphClient: Client;
-  constructor(
-    private authService: AuthService,
-    private alertsService: AlertsService) {
+1. Una vez que finalice el comando, agregue el componente a `routes` la matriz `./src/app/app-routing.module.ts`de.
 
-    // Initialize the Graph client
-    this.graphClient = Client.init({
-      authProvider: async (done) => {
-        // Get the token from the auth service
-        let token = await this.authService.getAccessToken()
-          .catch((reason) => {
-            done(reason, null);
+    ```TypeScript
+    import { CalendarComponent } from './calendar/calendar.component';
+
+    const routes: Routes = [
+      { path: '', component: HomeComponent },
+      { path: 'calendar', component: CalendarComponent }
+    ];
+    ```
+
+1. Abra el `./src/app/calendar/calendar.component.ts` archivo y reemplace el contenido por lo siguiente.
+
+    ```TypeScript
+    import { Component, OnInit } from '@angular/core';
+    import * as moment from 'moment-timezone';
+
+    import { GraphService } from '../graph.service';
+    import { Event, DateTimeTimeZone } from '../event';
+    import { AlertsService } from '../alerts.service';
+
+    @Component({
+      selector: 'app-calendar',
+      templateUrl: './calendar.component.html',
+      styleUrls: ['./calendar.component.css']
+    })
+    export class CalendarComponent implements OnInit {
+
+      public events: Event[];
+
+      constructor(
+        private graphService: GraphService,
+        private alertsService: AlertsService) { }
+
+      ngOnInit() {
+        this.graphService.getEvents()
+          .then((events) => {
+            this.events = events;
+            // Temporary to display raw results
+            this.alertsService.add('Events from Graph', JSON.stringify(events, null, 2));
           });
-
-        if (token)
-        {
-          done(null, token);
-        } else {
-          done("Could not get an access token", null);
-        }
       }
-    });
-  }
-
-  async getEvents(): Promise<Event[]> {
-    try {
-      let result =  await this.graphClient
-        .api('/me/events')
-        .select('subject,organizer,start,end')
-        .orderby('createdDateTime DESC')
-        .get();
-
-      return result.value;
-    } catch (error) {
-      this.alertsService.add('Could not get events', JSON.stringify(error, null, 2));
     }
-  }
-}
-```
-
-Tenga en cuenta lo que está haciendo este código.
-
-- Inicializa un cliente de Graph en el constructor del servicio.
-- Implementa una `getEvents` función que usa el cliente de Graph de la siguiente manera:
-  - La dirección URL a la que se `/me/events`llamará es.
-  - El `select` método limita los campos devueltos para cada evento a solo aquellos que la vista usará realmente.
-  - El `orderby` método ordena los resultados por la fecha y hora en que se crearon, con el elemento más reciente en primer lugar.
-
-Ahora cree un componente angular para llamar a este nuevo método y mostrar los resultados de la llamada. Ejecute el siguiente comando en su CLI.
-
-```Shell
-ng generate component calendar
-```
-
-Una vez que finalice el comando, agregue el componente a `routes` la matriz `./src/app/app-routing.module.ts`de.
-
-```TypeScript
-import { CalendarComponent } from './calendar/calendar.component';
-
-const routes: Routes = [
-  { path: '', component: HomeComponent },
-  { path: 'calendar', component: CalendarComponent }
-];
-```
-
-Abra el `./src/app/calendar/calendar.component.ts` archivo y reemplace el contenido por lo siguiente.
-
-```TypeScript
-import { Component, OnInit } from '@angular/core';
-import * as moment from 'moment-timezone';
-
-import { GraphService } from '../graph.service';
-import { Event, DateTimeTimeZone } from '../event';
-import { AlertsService } from '../alerts.service';
-
-@Component({
-  selector: 'app-calendar',
-  templateUrl: './calendar.component.html',
-  styleUrls: ['./calendar.component.css']
-})
-export class CalendarComponent implements OnInit {
-
-  private events: Event[];
-
-  constructor(
-    private graphService: GraphService,
-    private alertsService: AlertsService) { }
-
-  ngOnInit() {
-    this.graphService.getEvents()
-      .then((events) => {
-        this.events = events;
-        // Temporary to display raw results
-        this.alertsService.add('Events from Graph', JSON.stringify(events, null, 2));
-      });
-  }
-}
-```
+    ```
 
 Por ahora, esto solo representa la matriz de eventos en JSON en la página. Guarde los cambios y reinicie la aplicación. Inicie sesión y haga clic en el vínculo de **calendario** en la barra de navegación. Si todo funciona, debería ver un volcado JSON de eventos en el calendario del usuario.
 
 ## <a name="display-the-results"></a>Mostrar los resultados
 
-Ahora puede actualizar el `CalendarComponent` componente para mostrar los eventos de forma más fácil de uso. En primer lugar, quite el código temporal que agrega una alerta `ngOnInit` de la función. La función actualizada debería tener este aspecto.
+Ahora puede actualizar el `CalendarComponent` componente para mostrar los eventos de forma más fácil de uso.
 
-```TypeScript
-ngOnInit() {
-  this.graphService.getEvents()
-    .then((events) => {
-      this.events = events;
-    });
-}
-```
+1. Quite el código temporal que agrega una alerta de la `ngOnInit` función. La función actualizada debería tener este aspecto.
 
-Ahora, agregue una función a `CalendarComponent` la clase para dar `DateTimeTimeZone` formato a un objeto en una cadena ISO.
+    :::code language="typescript" source="../demo/graph-tutorial/src/app/calendar/calendar.component.ts" id="ngOnInitSnippet":::
 
-```TypeScript
-formatDateTimeTimeZone(dateTime: DateTimeTimeZone): string {
-  try {
-    return moment.tz(dateTime.dateTime, dateTime.timeZone).format();
-  }
-  catch(error) {
-    this.alertsService.add('DateTimeTimeZone conversion error', JSON.stringify(error));
-  }
-}
-```
+1. Agregue una función a la `CalendarComponent` clase para dar formato `DateTimeTimeZone` a un objeto en una cadena ISO.
 
-Por último, Abra `./src/app/calendar/calendar.component.html` el archivo y reemplace el contenido por lo siguiente.
+    :::code language="typescript" source="../demo/graph-tutorial/src/app/calendar/calendar.component.ts" id="formatDateTimeTimeZoneSnippet":::
 
-```html
-<h1>Calendar</h1>
-<table class="table">
-  <thead>
-    <th scope="col">Organizer</th>
-    <th scope="col">Subject</th>
-    <th scope="col">Start</th>
-    <th scope="col">End</th>
-  </thead>
-  <tbody>
-    <tr *ngFor="let event of events">
-      <td>{{event.organizer.emailAddress.name}}</td>
-      <td>{{event.subject}}</td>
-      <td>{{formatDateTimeTimeZone(event.start) | date:'short' }}</td>
-      <td>{{formatDateTimeTimeZone(event.end) | date: 'short' }}</td>
-    </tr>
-  </tbody>
-</table>
-```
+1. Abra el `./src/app/calendar/calendar.component.html` archivo y reemplace el contenido por lo siguiente.
+
+    :::code language="html" source="../demo/graph-tutorial/src/app/calendar/calendar.component.html" id="calendarHtml":::
 
 Esto recorre la colección de eventos y agrega una fila de tabla para cada uno. Guarde los cambios y reinicie la aplicación. Haga clic en el vínculo del **calendario** y la aplicación ahora debe representar una tabla de eventos.
 

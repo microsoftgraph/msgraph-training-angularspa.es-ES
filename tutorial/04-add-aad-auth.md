@@ -2,327 +2,160 @@
 
 En este ejercicio, ampliará la aplicación del ejercicio anterior para admitir la autenticación con Azure AD. Esto es necesario para obtener el token de acceso de OAuth necesario para llamar a Microsoft Graph. En este paso, integrará la [biblioteca de autenticación de Microsoft para angular](https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-angular/README.md) en la aplicación.
 
-Cree un nuevo archivo en el `./src` directorio denominado `oauth.ts` y agregue el siguiente código.
+1. Cree un nuevo archivo en el `./src` directorio denominado `oauth.ts` y agregue el siguiente código.
 
-```TypeScript
-export const OAuthSettings = {
-  appId: 'YOUR_APP_ID_HERE',
-  scopes: [
-    "user.read",
-    "calendars.read"
-  ]
-};
-```
+    :::code language="typescript" source="../demo/graph-tutorial/src/oauth.ts.example":::
 
-Reemplace `YOUR_APP_ID_HERE` por el identificador de la aplicación del portal de registro de aplicaciones.
+    Reemplace `YOUR_APP_ID_HERE` por el identificador de la aplicación del portal de registro de aplicaciones.
 
-> [!IMPORTANT]
-> Si usa un control de código fuente como GIT, ahora sería un buen momento para excluir el `oauth.ts` archivo del control de código fuente para evitar la pérdida inadvertida del identificador de la aplicación.
+    > [!IMPORTANT]
+    > Si usa un control de código fuente como GIT, ahora sería un buen momento para excluir el `oauth.ts` archivo del control de código fuente para evitar la pérdida inadvertida del identificador de la aplicación.
 
-Abra `./src/app/app.module.ts` y agregue las siguientes `import` instrucciones en la parte superior del archivo.
+1. Abra `./src/app/app.module.ts` y agregue las siguientes `import` instrucciones en la parte superior del archivo.
 
-```TypeScript
-import { MsalModule } from '@azure/msal-angular';
-import { OAuthSettings } from '../oauth';
-```
+    ```TypeScript
+    import { MsalModule } from '@azure/msal-angular';
+    import { OAuthSettings } from '../oauth';
+    ```
 
-A continuación, `MsalModule` agregue a `imports` la matriz dentro `@NgModule` de la declaración e inicialícela con el identificador de la aplicación.
+1. Agregue el `MsalModule` a la `imports` matriz dentro de `@NgModule` la declaración e inicialícela con el identificador de la aplicación.
 
-```TypeScript
-imports: [
-  BrowserModule,
-  AppRoutingModule,
-  NgbModule,
-  FontAwesomeModule,
-  MsalModule.forRoot({
-    clientID: OAuthSettings.appId
-  })
-],
-```
+    :::code language="typescript" source="../demo/graph-tutorial/src/app/app.module.ts" id="imports":::
 
 ## <a name="implement-sign-in"></a>Implementar el inicio de sesión
 
-Empiece por definir una clase `User` sencilla para contener la información sobre el usuario que muestra la aplicación. Cree un nuevo archivo en la `./src/app` carpeta denominada `user.ts` y agregue el código siguiente.
+En esta sección, creará un servicio de autenticación e implementará el inicio y el cierre de sesión.
 
-```TypeScript
-export class User {
-  displayName: string;
-  email: string;
-  avatar: string;
-}
-```
+1. Ejecute el siguiente comando en su CLI.
 
-Ahora cree un servicio de autenticación. Al crear un servicio para esto, puede inyectarlo fácilmente en cualquier componente que necesite acceso a los métodos de autenticación. Ejecute el siguiente comando en su CLI.
-
-```Shell
-ng generate service auth
-```
-
-Una vez que finalice el comando, `./src/app/auth.service.ts` Abra el archivo y reemplace el contenido por el código siguiente.
-
-```TypeScript
-import { Injectable } from '@angular/core';
-import { MsalService } from '@azure/msal-angular';
-
-import { AlertsService } from './alerts.service';
-import { OAuthSettings } from '../oauth';
-import { User } from './user';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthService {
-  public authenticated: boolean;
-  public user: User;
-
-  constructor(
-    private msalService: MsalService,
-    private alertsService: AlertsService) {
-
-    this.authenticated = false;
-    this.user = null;
-  }
-
-  // Prompt the user to sign in and
-  // grant consent to the requested permission scopes
-  async signIn(): Promise<void> {
-    let result = await this.msalService.loginPopup(OAuthSettings.scopes)
-      .catch((reason) => {
-        this.alertsService.add('Login failed', JSON.stringify(reason, null, 2));
-      });
-
-    if (result) {
-      this.authenticated = true;
-      // Temporary placeholder
-      this.user = new User();
-      this.user.displayName = "Adele Vance";
-      this.user.email = "AdeleV@contoso.com";
-    }
-  }
-
-  // Sign out
-  signOut(): void {
-    this.msalService.logout();
-    this.user = null;
-    this.authenticated = false;
-  }
-
-  // Silently request an access token
-  async getAccessToken(): Promise<string> {
-    let result = await this.msalService.acquireTokenSilent(OAuthSettings.scopes)
-      .catch((reason) => {
-        this.alertsService.add('Get token failed', JSON.stringify(reason, null, 2));
-      });
-
-    // Temporary to display token in an error box
-    if (result) this.alertsService.add('Token acquired', result);
-    return result;
-  }
-}
-```
-
-Ahora que tiene el servicio de autenticación, se puede inyectar en los componentes que inician sesión. Comience con el `NavBarComponent`. Abra el `./src/app/nav-bar/nav-bar.component.ts` archivo y realice los cambios siguientes.
-
-- Agregar `import { AuthService } from '../auth.service';` a la parte superior del archivo.
-- Quite las `authenticated` propiedades `user` y de la clase y quite el código que las establece en `ngOnInit`.
-- Inserte el `AuthService` mediante la adición del siguiente parámetro a `constructor`: `private authService: AuthService`.
-- Reemplace el método `signIn` existente con el siguiente:
-
-    ```TypeScript
-    async signIn(): Promise<void> {
-      await this.authService.signIn();
-    }
+    ```Shell
+    ng generate service auth
     ```
 
-- Reemplace el método `signOut` existente con el siguiente:
+    Al crear un servicio para esto, puede inyectarlo fácilmente en cualquier componente que necesite acceso a los métodos de autenticación.
+
+1. Una vez que finalice el comando, `./src/app/auth.service.ts` Abra el archivo y reemplace el contenido por el código siguiente.
 
     ```TypeScript
-    signOut(): void {
-      this.authService.signOut();
-    }
-    ```
+    import { Injectable } from '@angular/core';
+    import { MsalService } from '@azure/msal-angular';
 
-Cuando termine, el código debe tener un aspecto similar al siguiente.
+    import { AlertsService } from './alerts.service';
+    import { OAuthSettings } from '../oauth';
+    import { User } from './user';
 
-```TypeScript
-import { Component, OnInit } from '@angular/core';
+    @Injectable({
+      providedIn: 'root'
+    })
 
-import { AuthService } from '../auth.service';
+    export class AuthService {
+      public authenticated: boolean;
+      public user: User;
 
-@Component({
-  selector: 'app-nav-bar',
-  templateUrl: './nav-bar.component.html',
-  styleUrls: ['./nav-bar.component.css']
-})
-export class NavBarComponent implements OnInit {
+      constructor(
+        private msalService: MsalService,
+        private alertsService: AlertsService) {
 
-  // Should the collapsed nav show?
-  showNav: boolean;
+        this.authenticated = false;
+        this.user = null;
+      }
 
-  constructor(private authService: AuthService) { }
+      // Prompt the user to sign in and
+      // grant consent to the requested permission scopes
+      async signIn(): Promise<void> {
+        let result = await this.msalService.loginPopup(OAuthSettings)
+          .catch((reason) => {
+            this.alertsService.add('Login failed', JSON.stringify(reason, null, 2));
+          });
 
-  ngOnInit() {
-    this.showNav = false;
-  }
+        if (result) {
+          this.authenticated = true;
+          // Temporary placeholder
+          this.user = new User();
+          this.user.displayName = "Adele Vance";
+          this.user.email = "AdeleV@contoso.com";
+        }
+      }
 
-  // Used by the Bootstrap navbar-toggler button to hide/show
-  // the nav in a collapsed state
-  toggleNavBar(): void {
-    this.showNav = !this.showNav;
-  }
+      // Sign out
+      signOut(): void {
+        this.msalService.logout();
+        this.user = null;
+        this.authenticated = false;
+      }
 
-  async signIn(): Promise<void> {
-    await this.authService.signIn();
-  }
+      // Silently request an access token
+      async getAccessToken(): Promise<string> {
+        let result = await this.msalService.acquireTokenSilent(OAuthSettings)
+          .catch((reason) => {
+            this.alertsService.add('Get token failed', JSON.stringify(reason, null, 2));
+          });
 
-  signOut(): void {
-    this.authService.signOut();
-  }
-}
-```
-
-Como ha quitado `authenticated` las `user` propiedades y de la clase, también tiene que actualizar el `./src/app/nav-bar/nav-bar.component.html` archivo. Abra el archivo y realice los cambios siguientes.
-
-- Reemplace todas las instancias de `authenticated` por `authService.authenticated`.
-- Reemplace todas las instancias `user` de `authService.user`por.
-
-A continuación, `HomeComponent` actualice la clase. Realice todos los cambios que realizó en `./src/app/home/home.component.ts` la `NavBarComponent` clase con las siguientes excepciones.
-
-- No hay ningún `signOut` método en la `HomeComponent` clase.
-- Reemplace el `signIn` método por una versión ligeramente distinta. Este código llama `getAccessToken` a obtener un token de acceso, que, por ahora, generará el token como un error.
-
-    ```TypeScript
-    async signIn(): Promise<void> {
-      await this.authService.signIn();
-
-      // Temporary to display the token
-      if (this.authService.authenticated) {
-        let token = await this.authService.getAccessToken();
+        if (result) {
+          // Temporary to display token in an error box
+          this.alertsService.add('Token acquired', result.accessToken);
+          return result.accessToken;
+        }
+        return null;
       }
     }
     ```
 
-Cuando termine, el archivo debe tener un aspecto similar al siguiente.
+1. Abra el `./src/app/nav-bar/nav-bar.component.ts` archivo y reemplace el contenido por lo siguiente.
 
-```TypeScript
-import { Component, OnInit } from '@angular/core';
-import { AuthService } from '../auth.service';
+    :::code language="typescript" source="../demo/graph-tutorial/src/app/nav-bar/nav-bar.component.ts" id="navBarSnippet" highlight="3,15-22,24,26-28,36-38,40-42":::
 
-@Component({
-  selector: 'app-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css']
-})
-export class HomeComponent implements OnInit {
+1. Abra`./src/app/home/home.component.ts` y reemplace su contenido por lo siguiente.
 
-  constructor(private authService: AuthService) { }
-
-  ngOnInit() {
-  }
-
-  async signIn(): Promise<void> {
-    await this.authService.signIn();
-
-    // Temporary to display the token
-    if (this.authService.authenticated) {
-      let token = await this.authService.getAccessToken();
-    }
-  }
-}
-```
-
-Por último, realice los mismos reemplazos en `./src/app/home/home.component.html` que usted realizó para la barra de navegación.
+    :::code language="typescript" source="snippets/snippets.ts" id="homeSnippet" highlight="3,12-19,21,23,25-27":::
 
 Guarde los cambios y actualice el explorador. Haga clic en el botón **haga clic aquí para iniciar sesión** y debe redirigirse a `https://login.microsoftonline.com`. Inicie sesión con su cuenta de Microsoft y dé su consentimiento a los permisos solicitados. La página de la aplicación debe actualizarse y mostrar el token.
 
 ### <a name="get-user-details"></a>Obtener detalles del usuario
 
-Ahora, el servicio de autenticación establece valores constantes para el nombre para mostrar y la dirección de correo electrónico del usuario. Ahora que tiene un token de acceso, puede obtener detalles del usuario de Microsoft Graph para que esos valores se correspondan con el usuario actual. Abra `./src/app/auth.service.ts` y agregue la siguiente `import` instrucción a la parte superior del archivo.
+Ahora, el servicio de autenticación establece valores constantes para el nombre para mostrar y la dirección de correo electrónico del usuario. Ahora que tiene un token de acceso, puede obtener detalles del usuario de Microsoft Graph para que esos valores se correspondan con el usuario actual.
 
-```TypeScript
-import { Client } from '@microsoft/microsoft-graph-client';
-```
+1. Abra `./src/app/auth.service.ts` y agregue la siguiente `import` instrucción a la parte superior del archivo.
 
-Agregue una nueva función llamada `AuthService` a la clase `getUser`.
+    ```TypeScript
+    import { Client } from '@microsoft/microsoft-graph-client';
+    ```
 
-```TypeScript
-private async getUser(): Promise<User> {
-  if (!this.authenticated) return null;
+1. Agregue una nueva función llamada `AuthService` a la clase `getUser`.
 
-  let graphClient = Client.init({
-    // Initialize the Graph client with an auth
-    // provider that requests the token from the
-    // auth service
-    authProvider: async(done) => {
-      let token = await this.getAccessToken()
-        .catch((reason) => {
-          done(reason, null);
-        });
+    :::code language="typescript" source="../demo/graph-tutorial/src/app/auth.service.ts" id="getUserSnippet":::
 
-      if (token)
-      {
-        done(null, token);
-      } else {
-        done("Could not get an access token", null);
-      }
-    }
-  });
+1. Busque y quite el código siguiente en el `getAccessToken` método que agrega una alerta para mostrar el token de acceso.
 
-  // Get the user from Graph (GET /me)
-  let graphUser = await graphClient.api('/me').get();
+    ```TypeScript
+    // Temporary to display token in an error box
+    this.alertsService.add('Token acquired', result);
+    ```
 
-  let user = new User();
-  user.displayName = graphUser.displayName;
-  // Prefer the mail property, but fall back to userPrincipalName
-  user.email = graphUser.mail || graphUser.userPrincipalName;
+1. Busque y quite el código siguiente del `signIn` método.
 
-  return user;
-}
-```
+    ```TypeScript
+    // Temporary placeholder
+    this.user = new User();
+    this.user.displayName = "Adele Vance";
+    this.user.email = "AdeleV@contoso.com";
+    ```
 
-Busque y quite el código siguiente en el `getAccessToken` método que agrega una alerta para mostrar el token de acceso.
+1. En su ubicación, agregue el siguiente código.
 
-```TypeScript
-// Temporary to display token in an error box
-if (result) this.alertsService.add('Token acquired', result);
-```
+    ```TypeScript
+    this.user = await this.getUser();
+    ```
 
-Busque y quite el código siguiente del `signIn` método.
+    Este nuevo código usa el SDK de Microsoft Graph para obtener los detalles del usuario y, a `User` continuación, crea un objeto con los valores devueltos por la llamada a la API.
 
-```TypeScript
-// Temporary placeholder
-this.user = new User();
-this.user.displayName = "Adele Vance";
-this.user.email = "AdeleV@contoso.com";
-```
+1. Cambie la `constructor` para la `AuthService` clase para comprobar si el usuario ya ha iniciado sesión y cargar sus detalles en caso afirmativo. Reemplace el existente `constructor` por lo siguiente.
 
-En su ubicación, agregue el siguiente código.
+    :::code language="typescript" source="../demo/graph-tutorial/src/app/auth.service.ts" id="constructorSnippet" highlight="5-6":::
 
-```TypeScript
-this.user = await this.getUser();
-```
+1. Quite el código temporal de la `HomeComponent` clase. Abra el `./src/app/home/home.component.ts` archivo y reemplace la función `signIn` existente por lo siguiente.
 
-Este nuevo código usa el SDK de Microsoft Graph para obtener los detalles del usuario y, a `User` continuación, crea un objeto con los valores devueltos por la llamada a la API.
-
-Ahora, cambie `constructor` la para `AuthService` la clase para comprobar si el usuario ya ha iniciado sesión y cargar sus detalles en caso afirmativo. Reemplace el existente `constructor` por lo siguiente.
-
-```TypeScript
-constructor(
-  private msalService: MsalService,
-  private alertsService: AlertsService) {
-
-  this.authenticated = this.msalService.getUser() != null;
-  this.getUser().then((user) => {this.user = user});
-}
-```
-
-Por último, quite el código temporal de `HomeComponent` la clase. Abra el `./src/app/home/home.component.ts` archivo y reemplace la función `signIn` existente por lo siguiente.
-
-```TypeScript
-async signIn(): Promise<void> {
-  await this.authService.signIn();
-}
-```
+    :::code language="typescript" source="../demo/graph-tutorial/src/app/home/home.component.ts" id="signInSnippet" highlight="5-6":::
 
 Ahora, si guarda los cambios e inicia la aplicación, después de iniciar sesión debe terminar de nuevo en la Página principal, pero la interfaz de usuario debe cambiar para indicar que ha iniciado sesión.
 
