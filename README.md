@@ -32,13 +32,14 @@ Este módulo se ha registrado y está disponible en el canal de YouTube de desar
 
 | Versión |       Fecha       |                     Comentarios                     |
 | ------- | ---------------- | ------------------------------------------------ |
+| 1.7     | 22 de octubre de 2020 | Muestra actualizada a las versiones más recientes                |
 | 1.6     | 16 de marzo de 2020   | Muestra actualizada a las versiones más recientes                |
 | 1,5     | 18 de junio de 2019    | Se actualizó el archivo Léame en grabación de screencast actualizada |
 | 1.4     | 24 de mayo de 2019     | actualización del contenido de 2019Q4                           |
 | 1.3     | 6 de mayo de 2019      | Pasos de registro de aplicaciones de AAD actualizados               |
 | 1.2     | 18 de marzo de 2019   | actualización del contenido de 2019Q3                           |
 | 1.1     | 8 de febrero de 2019 | Diapositivas agregadas                                     |
-| 1.0     | 2018             | Published                                        |
+| 1.0     | 2018             | Publicado                                        |
 
 ## <a name="disclaimer"></a>Aviso de declinación de responsabilidades
 

@@ -1,6 +1,6 @@
 # <a name="graphtutorial"></a>GraphTutorial
 
-Este proyecto se generó con [angular CLI](https://github.com/angular/angular-cli) versión 9.0.6.
+Este proyecto se generó con la versión 10.1.7 de [angular](https://github.com/angular/angular-cli) de la CLI.
 
 ## <a name="development-server"></a>Servidor de desarrollo
 
@@ -8,11 +8,11 @@ Ejecutar `ng serve` para un servidor de desarrollo. Vaya a `http://localhost:420
 
 ## <a name="code-scaffolding"></a>Scaffolding de código
 
-Ejecutar `ng generate component component-name` para generar un nuevo componente. También puede usar `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Ejecutar `ng generate component component-name` para generar un nuevo componente. También puede usar `ng generate directive|pipe|service|class|guard|interface|enum|module` .
 
-## <a name="build"></a>Compilación
+## <a name="build"></a>Compilar
 
-Ejecutar `ng build` para compilar el proyecto. Los artefactos de compilación se almacenarán en `dist/` el directorio. Usar la `--prod` marca para una compilación de producción.
+Ejecutar `ng build` para compilar el proyecto. Los artefactos de compilación se almacenarán en el `dist/` directorio. Usar la `--prod` marca para una compilación de producción.
 
 ## <a name="running-unit-tests"></a>Ejecutar pruebas unitarias
 
@@ -24,4 +24,4 @@ Ejecutar `ng e2e` para ejecutar las pruebas de un extremo a otro a través del [
 
 ## <a name="further-help"></a>Ayuda adicional
 
-Para obtener más ayuda sobre la CLI de angular, use `ng help` o vaya consulte el archivo Léame de la CLI de [angular](https://github.com/angular/angular-cli/blob/master/README.md).
+Para obtener más ayuda sobre la CLI de angular, use `ng help` o vaya consulte el [archivo Léame de la CLI de angular](https://github.com/angular/angular-cli/blob/master/README.md).
